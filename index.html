@@ -1,0 +1,721 @@
+detektif-ekosistem.html
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detektif Ekosistem: Misteri Rantai Makanan</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+  body {
+    background: linear-gradient(135deg,#1a5e3a,#2d8f5f,#87c78a);
+    min-height:100vh; display:flex; justify-content:center; align-items:center;
+    padding:12px; color:#1a3d2a;
+  }
+  #game {
+    width:100%; max-width:480px; background:#fffdf5; border-radius:24px;
+    box-shadow:0 12px 40px rgba(0,0,0,.4); padding:20px; position:relative;
+    min-height:640px; overflow:hidden;
+  }
+  .screen { display:none; animation:fade .4s; }
+  .screen.active { display:block; }
+  @keyframes fade { from{opacity:0;transform:translateY(10px)} to{opacity:1;transform:none} }
+
+  h1 { font-size:1.4rem; text-align:center; color:#1a5e3a; margin-bottom:6px; }
+  h2 { font-size:1.15rem; color:#1a5e3a; margin-bottom:10px; text-align:center; }
+  p  { font-size:.92rem; line-height:1.45; margin-bottom:10px; }
+  .sub { text-align:center; color:#4a6b57; font-size:.85rem; margin-bottom:16px; }
+
+  button {
+    cursor:pointer; border:none; border-radius:14px; padding:12px 18px;
+    font-size:1rem; font-weight:700; transition:.2s; width:100%; margin-top:8px;
+  }
+  .btn-main { background:#2d8f5f; color:#fff; box-shadow:0 4px 0 #1a5e3a; }
+  .btn-main:active { transform:translateY(3px); box-shadow:0 1px 0 #1a5e3a; }
+  .btn-main:disabled { background:#a8cbb3; box-shadow:0 4px 0 #7ba88a; cursor:not-allowed; }
+  .btn-sec { background:#e8f3ec; color:#1a5e3a; }
+  .btn-sec:active { background:#d4e8db; }
+
+  input[type="text"] {
+    width:100%; padding:12px 16px; border:3px solid #d4e8db; border-radius:14px;
+    font-size:1rem; margin-bottom:10px; outline:none; transition:.2s;
+  }
+  input[type="text"]:focus { border-color:#2d8f5f; background:#f0f8f3; }
+
+  .topbar { display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; }
+  .score-box { background:#1a5e3a; color:#fff; padding:6px 14px; border-radius:20px; font-weight:700; font-size:.85rem; }
+  .badge-box { font-size:1.1rem; letter-spacing:2px; }
+
+  .card-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; margin-bottom:12px; }
+  .card {
+    background:#fff; border:3px solid #d4e8db; border-radius:14px; padding:10px 4px;
+    text-align:center; cursor:pointer; transition:.2s; user-select:none;
+  }
+  .card .emoji { font-size:1.8rem; display:block; }
+  .card .label { font-size:.62rem; font-weight:600; color:#4a6b57; }
+  .card:hover { transform:scale(1.05); border-color:#2d8f5f; }
+  .card.selected { border-color:#f5a623; background:#fff8e8; transform:scale(1.08); }
+  .card.done { opacity:.35; pointer-events:none; }
+  .card.shake { animation:shake .4s; }
+  @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-6px)} 75%{transform:translateX(6px)} }
+
+  .dropzones { display:grid; grid-template-columns:1fr; gap:8px; }
+  .zone {
+    border:3px dashed #a8cbb3; border-radius:14px; padding:10px; min-height:58px;
+    background:#f0f8f3; text-align:center; cursor:pointer;
+  }
+  .zone .z-title { font-weight:700; font-size:.8rem; color:#1a5e3a; margin-bottom:4px; }
+  .zone .z-items { display:flex; flex-wrap:wrap; gap:4px; justify-content:center; }
+  .zone .z-items span { font-size:1.3rem; }
+  .zone.highlight { border-color:#f5a623; background:#fff8e8; }
+
+  .chain { display:flex; align-items:center; justify-content:center; gap:4px; flex-wrap:wrap; margin:14px 0; }
+  .slot {
+    width:56px; height:56px; border:3px dashed #a8cbb3; border-radius:12px;
+    display:flex; align-items:center; justify-content:center; font-size:1.6rem;
+    background:#f0f8f3; cursor:pointer;
+  }
+  .slot.filled { border-style:solid; border-color:#2d8f5f; background:#fff; }
+  .slot.good { border-color:#2d8f5f; background:#d9f2e2; }
+  .slot.bad { border-color:#e05252; background:#fdeaea; }
+  .arrow { font-size:1.2rem; color:#2d8f5f; }
+  .bank { display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin:12px 0; }
+  .bank .b-item {
+    width:52px; height:52px; font-size:1.5rem; background:#fff; border:3px solid #d4e8db;
+    border-radius:12px; display:flex; align-items:center; justify-content:center; cursor:pointer;
+  }
+  .bank .b-item:hover { border-color:#2d8f5f; transform:scale(1.08); }
+  .bank .b-item.used { opacity:.3; pointer-events:none; }
+
+  table { width:100%; border-collapse:collapse; margin:10px 0; font-size:.85rem; }
+  th,td { border:1px solid #a8cbb3; padding:6px; text-align:center; }
+  th { background:#d9f2e2; color:#1a5e3a; }
+  .q-box { background:#f0f8f3; border-radius:12px; padding:12px; margin-bottom:10px; }
+  .q-box .q { font-weight:700; font-size:.88rem; margin-bottom:8px; }
+  .opt { display:block; width:100%; text-align:left; background:#fff; border:2px solid #d4e8db; border-radius:10px; padding:9px 12px; margin-bottom:6px; font-size:.85rem; cursor:pointer; }
+  .opt:hover { border-color:#2d8f5f; }
+  .opt.correct { border-color:#2d8f5f; background:#d9f2e2; }
+  .opt.wrong { border-color:#e05252; background:#fdeaea; }
+  .fb { font-size:.8rem; margin-top:6px; padding:8px; border-radius:8px; display:none; }
+  .fb.show { display:block; }
+  .fb.ok { background:#d9f2e2; color:#1a5e3a; }
+  .fb.no { background:#fdeaea; color:#a33; }
+
+  .case-box { background:#fff3e0; border:2px solid #f5a623; border-radius:12px; padding:12px; margin-bottom:12px; font-size:.88rem; }
+  .pick { display:block; width:100%; text-align:left; background:#fff; border:2px solid #d4e8db; border-radius:10px; padding:10px 12px; margin-bottom:6px; font-size:.85rem; cursor:pointer; }
+  .pick.picked { border-color:#2d8f5f; background:#d9f2e2; }
+  .pick.picked-bad { border-color:#e05252; background:#fdeaea; }
+
+  .result-center { text-align:center; padding:16px 0; }
+  .big-score { font-size:3rem; font-weight:800; color:#2d8f5f; }
+  .stars { font-size:2.2rem; margin:8px 0; }
+  .badge-list { display:flex; flex-wrap:wrap; gap:8px; justify-content:center; margin:14px 0; }
+  .badge-list .b { background:#d9f2e2; border-radius:12px; padding:10px; font-size:.8rem; text-align:center; width:88px; }
+  .badge-list .b .e { font-size:1.6rem; display:block; }
+  .cert { background:linear-gradient(135deg,#fff8e8,#d9f2e2); border:3px double #f5a623; border-radius:14px; padding:14px; margin:12px 0; }
+  .cert h3 { color:#1a5e3a; font-size:1rem; margin-bottom:4px; text-align:center; }
+  .cert .name { font-size:1.2rem; font-weight:800; color:#1a5e3a; text-align:center; margin:6px 0; text-decoration:underline; }
+  .cert p { font-size:.78rem; text-align:center; }
+
+  .feedback-toast {
+    position:absolute; bottom:16px; left:50%; transform:translateX(-50%);
+    background:#1a5e3a; color:#fff; padding:10px 20px; border-radius:24px;
+    font-size:.85rem; font-weight:600; opacity:0; transition:.3s; pointer-events:none;
+    white-space:nowrap; z-index:10; max-width:90%; text-align:center;
+  }
+  .feedback-toast.show { opacity:1; bottom:26px; }
+  .feedback-toast.ok { background:#2d8f5f; }
+  .feedback-toast.no { background:#e05252; }
+  .feedback-toast.info { background:#3b6ea5; }
+
+  .sound-toggle {
+    position:absolute; top:14px; right:14px; width:38px; height:38px;
+    background:#e8f3ec; border-radius:50%; display:flex; align-items:center;
+    justify-content:center; font-size:1.1rem; cursor:pointer; z-index:20;
+    border:2px solid #d4e8db;
+  }
+  .sound-toggle:hover { background:#d4e8db; }
+
+  .send-status {
+    font-size:.78rem; text-align:center; padding:8px; border-radius:8px;
+    margin-top:8px; display:none;
+  }
+  .send-status.show { display:block; }
+  .send-status.ok { background:#d9f2e2; color:#1a5e3a; }
+  .send-status.no { background:#fdeaea; color:#a33; }
+  .send-status.loading { background:#fff3e0; color:#a36b00; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="sound-toggle" id="soundToggle" onclick="toggleSound()">🔊</div>
+
+  <!-- ============ LAYAR PEMBUKA ============ -->
+  <div class="screen active" id="scr-start">
+    <h1>🔍 DETEKTIF EKOSISTEM</h1>
+    <p class="sub">Misteri Rantai Makanan · Kelas 5 SD</p>
+    <div style="text-align:center;font-size:3.5rem;margin:16px 0;">🕵️‍♂️🌾🐛🐸🐍</div>
+    <p style="text-align:center;">Halo Detektif Muda! Ekosistem di desa Ngepeh sedang kacau. Selidiki <b>siapa makan siapa</b> dan pulihkan harmoni alam! Kumpulkan <b>4 lencana</b> untuk menyelesaikan misi.</p>
+    <input type="text" id="studentName" placeholder="Tulis namamu di sini..." maxlength="30" autocomplete="off">
+    <button class="btn-main" onclick="startGame()">▶️ MULAI MISI</button>
+    <button class="btn-sec" onclick="showHowTo()">📖 Cara Bermain</button>
+  </div>
+
+  <!-- ============ MISI 1 ============ -->
+  <div class="screen" id="scr-m1">
+    <div class="topbar">
+      <span class="score-box">⭐ <span id="m1-score">0</span>/30 poin</span>
+      <span class="badge-box" id="m1-badges"></span>
+    </div>
+    <h2>MISI 1 · Kenali Peran</h2>
+    <p class="sub">Klik kartu, lalu klik kotak yang sesuai!</p>
+    <div class="card-grid" id="m1-cards"></div>
+    <div class="dropzones">
+      <div class="zone" data-cat="produsen"><div class="z-title">🌱 PRODUSEN (membuat makanan sendiri)</div><div class="z-items"></div></div>
+      <div class="zone" data-cat="konsumen"><div class="z-title">🐾 KONSUMEN (memakan makhluk lain)</div><div class="z-items"></div></div>
+      <div class="zone" data-cat="dekomposer"><div class="z-title">🍄 DEKOMPOSER (pengurai)</div><div class="z-items"></div></div>
+    </div>
+    <button class="btn-main" id="m1-next" style="display:none" onclick="go('scr-m2')">Lanjut ke Misi 2 ➡️</button>
+  </div>
+
+  <!-- ============ MISI 2 ============ -->
+  <div class="screen" id="scr-m2">
+    <div class="topbar">
+      <span class="score-box">⭐ <span id="m2-score">0</span>/30 poin</span>
+      <span class="badge-box" id="m2-badges"></span>
+    </div>
+    <h2>MISI 2 · Susun Rantai Makanan</h2>
+    <p class="sub" id="m2-theme">Ekosistem Sawah — susun urutan yang benar!</p>
+    <div class="chain" id="m2-chain"></div>
+    <div class="bank" id="m2-bank"></div>
+    <button class="btn-main" onclick="checkChain()">✅ PERIKSA URUTAN</button>
+    <button class="btn-sec" onclick="resetChain()">🔄 Ulangi</button>
+    <button class="btn-main" id="m2-next" style="display:none" onclick="go('scr-m3')">Lanjut ke Misi 3 ➡️</button>
+  </div>
+
+  <!-- ============ MISI 3 ============ -->
+  <div class="screen" id="scr-m3">
+    <div class="topbar">
+      <span class="score-box">⭐ <span id="m3-score">0</span>/20 poin</span>
+      <span class="badge-box" id="m3-badges"></span>
+    </div>
+    <h2>MISI 3 · Detektif Sawah</h2>
+    <p class="sub">Baca data & jawab pertanyaan literasi-numerasi!</p>
+    <table>
+      <tr><th>Makhluk Hidup</th><th>Jumlah</th></tr>
+      <tr><td>🌾 Padi</td><td>1.000</td></tr>
+      <tr><td>🐛 Belalang</td><td>200</td></tr>
+      <tr><td>🐸 Katak</td><td>30</td></tr>
+      <tr><td>🐍 Ular</td><td>5</td></tr>
+    </table>
+    <div id="m3-questions"></div>
+    <button class="btn-main" id="m3-next" style="display:none" onclick="go('scr-m4')">Lanjut ke Misi 4 ➡️</button>
+  </div>
+
+  <!-- ============ MISI 4 ============ -->
+  <div class="screen" id="scr-m4">
+    <div class="topbar">
+      <span class="score-box">⭐ <span id="m4-score">0</span>/20 poin</span>
+      <span class="badge-box" id="m4-badges"></span>
+    </div>
+    <h2>MISI 4 · Kasus Ekosistem Rusak</h2>
+    <div class="case-box">⚠️ <b>Kasus:</b> Petani menyemprot pestisida berlebihan. Belalang mati. Apa yang terjadi selanjutnya? <br><small>Pilih 3 dampak yang benar!</small></div>
+    <div id="m4-picks"></div>
+    <button class="btn-main" onclick="checkCase()">🔎 SELIDIKI</button>
+    <button class="btn-main" id="m4-next" style="display:none" onclick="go('scr-result')">Lihat Hasil 🏆</button>
+  </div>
+
+  <!-- ============ HASIL ============ -->
+  <div class="screen" id="scr-result">
+    <div class="result-center">
+      <h2>🏆 HASIL PENYELIDIKAN</h2>
+      <div class="big-score" id="final-score">0</div>
+      <div class="stars" id="final-stars">⭐</div>
+      <p id="final-msg" style="font-weight:700;"></p>
+    </div>
+    <div class="badge-list" id="final-badges"></div>
+    <div class="cert" id="cert" style="display:none">
+      <h3>🎓 SERTIFIKAT DETEKTIF EKOSISTEM</h3>
+      <p>Diberikan kepada:</p>
+      <div class="name" id="cert-name">—</div>
+      <p>Karena telah berhasil menjaga harmoni ekosistem!</p>
+    </div>
+    <button class="btn-main" id="btn-send" onclick="sendScore()">📤 Kirim Skor ke Guru</button>
+    <div class="send-status" id="send-status"></div>
+    <button class="btn-sec" onclick="restart()">🔁 Main Lagi</button>
+  </div>
+
+  <div class="feedback-toast" id="toast"></div>
+</div>
+
+<script>
+/* ================= KONFIGURASI ================= */
+// ⚠️ GANTI URL INI dengan URL Google Apps Script Anda (lihat FILE 2 di bawah)
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwt7gLEjqmVSXBehaKINJ-TWSGII1nAhXQgVxJanh0XxkkGFltmhVmQ7mkbITVlEOEkzA/exec";
+
+/* ================= AUDIO (Web Audio API) ================= */
+let audioCtx = null, soundOn = true, bgMusic = null;
+
+function initAudio(){
+  if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+}
+function playTone(freq, dur, type='sine', vol=0.15){
+  if(!soundOn) return;
+  initAudio();
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = type;
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+  gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+  osc.connect(gain); gain.connect(audioCtx.destination);
+  osc.start(); osc.stop(audioCtx.currentTime + dur);
+}
+function sfxClick(){ playTone(600, 0.08, 'square', 0.1); }
+function sfxCorrect(){ playTone(523, 0.1); setTimeout(()=>playTone(659,0.1),80); setTimeout(()=>playTone(784,0.15),160); }
+function sfxWrong(){ playTone(220, 0.2, 'sawtooth', 0.12); }
+function sfxWin(){ [523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,0.2),i*120)); }
+
+// Musik latar sederhana (loop melodi)
+let musicTimer = null;
+function startMusic(){
+  if(!soundOn) return;
+  stopMusic();
+  const notes = [262,330,392,523,392,330,294,349,440,523,440,349];
+  let i = 0;
+  musicTimer = setInterval(()=>{
+    if(!soundOn) return;
+    playTone(notes[i % notes.length], 0.25, 'triangle', 0.04);
+    i++;
+  }, 600);
+}
+function stopMusic(){ if(musicTimer){ clearInterval(musicTimer); musicTimer=null; } }
+function toggleSound(){
+  soundOn = !soundOn;
+  document.getElementById('soundToggle').textContent = soundOn ? '🔊' : '🔇';
+  if(soundOn) startMusic(); else stopMusic();
+}
+
+/* ================= STATE ================= */
+let studentName = "";
+let total = 0;
+let badges = { m1:false, m2:false, m3:false, m4:false };
+let scores = { m1:0, m2:0, m3:0, m4:0 };
+let scoreSent = false;
+
+function go(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='scr-m1') initM1();
+  if(id==='scr-m2') initM2();
+  if(id==='scr-m3') initM3();
+  if(id==='scr-m4') initM4();
+  if(id==='scr-result') showResult();
+}
+
+function toast(msg, type='ok'){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'feedback-toast show ' + type;
+  setTimeout(()=>t.className='feedback-toast', 1800);
+}
+
+function startGame(){
+  const nameInput = document.getElementById('studentName').value.trim();
+  if(!nameInput || nameInput.length < 2){
+    sfxWrong();
+    toast('Tulis namamu dulu ya, Detektif!', 'no');
+    document.getElementById('studentName').focus();
+    return;
+  }
+  studentName = nameInput;
+  sfxClick();
+  startMusic();
+  go('scr-m1');
+}
+
+function showHowTo(){
+  sfxClick();
+  alert('📖 CARA BERMAIN:\n\n1. Ada 4 misi yang harus diselesaikan.\n2. Misi 1: Kenali peran makhluk hidup.\n3. Misi 2: Susun rantai makanan.\n4. Misi 3: Jawab soal literasi-numerasi.\n5. Misi 4: Selidiki kasus ekosistem.\n6. Kumpulkan 4 lencana untuk sertifikat!\n7. Di akhir, kirim skormu ke guru.\n\nSelamat bermain! 🕵️');
+}
+
+/* ================= MISI 1 ================= */
+const M1_DATA = [
+  {e:'🌾', n:'Padi', c:'produsen'}, {e:'🌿', n:'Rumput', c:'produsen'}, {e:'🌳', n:'Pohon', c:'produsen'},
+  {e:'🐛', n:'Ulat', c:'konsumen'}, {e:'🐄', n:'Sapi', c:'konsumen'}, {e:'🐸', n:'Katak', c:'konsumen'},
+  {e:'🍄', n:'Jamur', c:'dekomposer'}, {e:'🪱', n:'Cacing', c:'dekomposer'}, {e:'🦠', n:'Bakteri', c:'dekomposer'}
+];
+let m1Sel = null, m1Done = 0;
+function initM1(){
+  m1Sel = null; m1Done = 0; scores.m1 = 0;
+  const grid = document.getElementById('m1-cards');
+  grid.innerHTML = '';
+  const shuffled = [...M1_DATA].sort(()=>Math.random()-0.5);
+  shuffled.forEach((d)=>{
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = `<span class="emoji">${d.e}</span><span class="label">${d.n}</span>`;
+    card.dataset.cat = d.c;
+    card.onclick = ()=>{
+      if(card.classList.contains('done')) return;
+      sfxClick();
+      document.querySelectorAll('#m1-cards .card').forEach(c=>c.classList.remove('selected'));
+      card.classList.add('selected');
+      m1Sel = card;
+    };
+    grid.appendChild(card);
+  });
+  document.querySelectorAll('#scr-m1 .zone').forEach(z=>{
+    z.querySelector('.z-items').innerHTML = '';
+    z.classList.remove('highlight');
+    z.onclick = ()=>dropM1(z);
+  });
+  document.getElementById('m1-next').style.display = 'none';
+  updateScore('m1');
+}
+function dropM1(zone){
+  if(!m1Sel){ toast('Pilih kartu dulu ya!', 'info'); return; }
+  const card = m1Sel;
+  if(card.dataset.cat === zone.dataset.cat){
+    zone.querySelector('.z-items').innerHTML += `<span>${card.querySelector('.emoji').textContent}</span>`;
+    card.classList.add('done');
+    card.classList.remove('selected');
+    m1Sel = null;
+    m1Done++;
+    scores.m1 += 10;
+    total += 10;
+    updateScore('m1');
+    sfxCorrect();
+    toast('Tepat sekali, Detektif! +10', 'ok');
+    if(m1Done === 9){
+      badges.m1 = true;
+      document.getElementById('m1-badges').textContent = '🥉';
+      document.getElementById('m1-next').style.display = 'block';
+      setTimeout(()=>toast('Lencana Peneliti didapat! 🥉', 'ok'), 1000);
+    }
+  } else {
+    card.classList.add('shake');
+    setTimeout(()=>card.classList.remove('shake'), 400);
+    sfxWrong();
+    toast('Belum tepat. Coba pikirkan lagi!', 'no');
+  }
+}
+
+/* ================= MISI 2 ================= */
+const CHAINS = [
+  { theme:'Ekosistem Sawah', items:[{e:'🌾',n:'Padi'},{e:'🐛',n:'Belalang'},{e:'🐸',n:'Katak'},{e:'🐍',n:'Ular'}] },
+  { theme:'Ekosistem Kebun', items:[{e:'🍃',n:'Daun'},{e:'🐛',n:'Ulat'},{e:'🐦',n:'Burung'},{e:'🐍',n:'Ular'}] },
+  { theme:'Ekosistem Hutan', items:[{e:'🍎',n:'Buah'},{e:'🐒',n:'Monyet'},{e:'🐆',n:'Harimau'},{e:'🍄',n:'Jamur'}] }
+];
+let m2Chain, m2Slots = [], m2BankUsed = new Set();
+function initM2(){
+  m2Chain = CHAINS[Math.floor(Math.random()*CHAINS.length)];
+  document.getElementById('m2-theme').textContent = m2Chain.theme + ' — susun urutan yang benar!';
+  m2Slots = new Array(m2Chain.items.length).fill(null);
+  m2BankUsed = new Set();
+  scores.m2 = 0;
+  updateScore('m2');
+  renderM2();
+  document.getElementById('m2-next').style.display = 'none';
+}
+function renderM2(){
+  const chainEl = document.getElementById('m2-chain');
+  chainEl.innerHTML = '';
+  m2Slots.forEach((val,i)=>{
+    const slot = document.createElement('div');
+    slot.className = 'slot' + (val?' filled':'');
+    slot.textContent = val ? val.e : '?';
+    slot.onclick = ()=>{ if(m2Slots[i]){ sfxClick(); m2BankUsed.delete(m2Slots[i].e); m2Slots[i]=null; renderM2(); } };
+    chainEl.appendChild(slot);
+    if(i < m2Slots.length-1){
+      const a = document.createElement('span'); a.className='arrow'; a.textContent='➡️'; chainEl.appendChild(a);
+    }
+  });
+  const bankEl = document.getElementById('m2-bank');
+  bankEl.innerHTML = '';
+  [...m2Chain.items].sort(()=>Math.random()-0.5).forEach(item=>{
+    const b = document.createElement('div');
+    b.className = 'b-item' + (m2BankUsed.has(item.e)?' used':'');
+    b.textContent = item.e;
+    b.title = item.n;
+    b.onclick = ()=>{
+      if(m2BankUsed.has(item.e)) return;
+      const idx = m2Slots.indexOf(null);
+      if(idx === -1){ toast('Slot sudah penuh!', 'no'); return; }
+      sfxClick();
+      m2Slots[idx] = item;
+      m2BankUsed.add(item.e);
+      renderM2();
+    };
+    bankEl.appendChild(b);
+  });
+}
+function checkChain(){
+  if(m2Slots.includes(null)){ toast('Isi semua slot dulu ya!', 'no'); return; }
+  const correct = m2Slots.every((s,i)=> s && s.e === m2Chain.items[i].e);
+  const slotEls = document.querySelectorAll('#m2-chain .slot');
+  slotEls.forEach((el,i)=>{
+    el.classList.remove('good','bad');
+    if(m2Slots[i].e === m2Chain.items[i].e) el.classList.add('good');
+    else el.classList.add('bad');
+  });
+  if(correct){
+    scores.m2 = 30; total += 30; updateScore('m2');
+    badges.m2 = true;
+    document.getElementById('m2-badges').textContent = '🥈';
+    document.getElementById('m2-next').style.display = 'block';
+    sfxCorrect();
+    toast('Rantai makanan benar! +30 🥈', 'ok');
+  } else {
+    sfxWrong();
+    toast('Masih ada yang salah. Energi mengalir dari yang dimakan ke pemakan!', 'no');
+  }
+}
+function resetChain(){
+  sfxClick();
+  m2Slots = new Array(m2Chain.items.length).fill(null);
+  m2BankUsed = new Set();
+  renderM2();
+}
+
+/* ================= MISI 3 ================= */
+const M3_QS = [
+  { q:'1. Apa yang terjadi pada populasi katak jika ular banyak diburu manusia?',
+    opts:['Populasi katak meningkat karena tidak ada pemangsa','Populasi katak menurun karena kehabisan makanan','Populasi katak tetap sama','Katak berubah menjadi ular'],
+    ans:0, fb:'Benar! Ular adalah pemangsa katak. Jika ular berkurang, katak justru bisa meningkat karena tidak ada pemangsa — namun belalang bisa habis. Ini menunjukkan ketergantungan antar komponen ekosistem.' },
+  { q:'2. Mengapa jumlah padi paling banyak dalam tabel?',
+    opts:['Karena padi tidak dimakan siapa pun','Karena padi adalah produsen yang menjadi sumber energi utama','Karena padi hewan besar','Karena padi tidak butuh matahari'],
+    ans:1, fb:'Tepat! Padi adalah produsen. Dalam piramida makanan, jumlah produsen harus paling banyak agar energi cukup untuk konsumen di atasnya.' },
+  { q:'3. Jika 1 katak memakan 5 belalang sehari, berapa belalang yang dimakan 30 katak dalam sehari?',
+    opts:['35 belalang','150 belalang','300 belalang','1.000 belalang'],
+    ans:1, fb:'Benar! 30 × 5 = 150 belalang per hari. Ini menunjukkan peran katak sebagai pengendali populasi belalang.' },
+  { q:'4. Bandingkan jumlah ular (5) dan katak (30). Mengapa ular lebih sedikit?',
+    opts:['Karena ular tidak suka makan','Karena ular berada di tingkat trofik lebih tinggi, energi yang tersedia lebih sedikit','Karena ular bukan konsumen','Karena ular adalah produsen'],
+    ans:1, fb:'Tepat! Semakin tinggi tingkat trofik, semakin sedikit energi yang tersedia (piramida makanan), sehingga jumlah individunya juga lebih sedikit.' }
+];
+let m3Answered = 0;
+function initM3(){
+  m3Answered = 0; scores.m3 = 0;
+  updateScore('m3');
+  const box = document.getElementById('m3-questions');
+  box.innerHTML = '';
+  document.getElementById('m3-next').style.display = 'none';
+  M3_QS.forEach((q)=>{
+    const wrap = document.createElement('div');
+    wrap.className = 'q-box';
+    wrap.innerHTML = `<div class="q">${q.q}</div>`;
+    q.opts.forEach((o,oi)=>{
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.textContent = o;
+      b.onclick = ()=>{
+        if(wrap.dataset.done) return;
+        wrap.dataset.done = '1';
+        m3Answered++;
+        if(oi === q.ans){
+          b.classList.add('correct');
+          scores.m3 += 5; total += 5; updateScore('m3');
+          sfxCorrect();
+          toast('Benar! +5', 'ok');
+        } else {
+          b.classList.add('wrong');
+          wrap.querySelectorAll('.opt')[q.ans].classList.add('correct');
+          sfxWrong();
+          toast('Belum tepat, lihat jawaban benar.', 'no');
+        }
+        const fb = document.createElement('div');
+        fb.className = 'fb show ' + (oi===q.ans?'ok':'no');
+        fb.textContent = '💡 ' + q.fb;
+        wrap.appendChild(fb);
+        if(m3Answered === M3_QS.length){
+          badges.m3 = true;
+          document.getElementById('m3-badges').textContent = '🥇';
+          document.getElementById('m3-next').style.display = 'block';
+        }
+      };
+      wrap.appendChild(b);
+    });
+    box.appendChild(wrap);
+  });
+}
+
+/* ================= MISI 4 ================= */
+const M4_PICKS = [
+  {t:'Katak kehilangan makanan → populasi katak turun', ok:true},
+  {t:'Ular pindah atau mati karena sedikit makanan', ok:true},
+  {t:'Petani rugi karena ekosistem tidak seimbang', ok:true},
+  {t:'Padi makin subur tanpa hama', ok:false},
+  {t:'Semua hewan bahagia', ok:false},
+  {t:'Tidak ada dampak sama sekali', ok:false}
+];
+let m4Picked = new Set();
+function initM4(){
+  m4Picked = new Set(); scores.m4 = 0;
+  updateScore('m4');
+  document.getElementById('m4-next').style.display = 'none';
+  const box = document.getElementById('m4-picks');
+  box.innerHTML = '';
+  M4_PICKS.forEach((p,i)=>{
+    const b = document.createElement('button');
+    b.className = 'pick';
+    b.textContent = p.t;
+    b.onclick = ()=>{
+      if(b.classList.contains('picked') || b.classList.contains('picked-bad')){
+        b.classList.remove('picked','picked-bad');
+        m4Picked.delete(i);
+        sfxClick();
+      } else if(m4Picked.size < 3){
+        b.classList.add('picked');
+        m4Picked.add(i);
+        sfxClick();
+      } else {
+        toast('Pilih maksimal 3 dampak!', 'no');
+      }
+    };
+    box.appendChild(b);
+  });
+}
+function checkCase(){
+  if(m4Picked.size !== 3){ toast('Pilih tepat 3 dampak dulu!', 'no'); return; }
+  let benar = 0;
+  document.querySelectorAll('#m4-picks .pick').forEach((b,i)=>{
+    b.classList.remove('picked','picked-bad');
+    if(M4_PICKS[i].ok && m4Picked.has(i)){ b.classList.add('picked'); benar++; }
+    else if(!M4_PICKS[i].ok && m4Picked.has(i)){ b.classList.add('picked-bad'); }
+  });
+  if(benar === 3){
+    scores.m4 = 20; total += 20; updateScore('m4');
+    badges.m4 = true;
+    document.getElementById('m4-badges').textContent = '🏅';
+    document.getElementById('m4-next').style.display = 'block';
+    sfxCorrect();
+    toast('Selidiki tepat! +20 🏅', 'ok');
+  } else {
+    sfxWrong();
+    toast(`Baru ${benar} dampak benar. Coba lagi!`, 'no');
+  }
+}
+
+/* ================= HASIL ================= */
+function updateScore(m){
+  document.getElementById(m+'-score').textContent = scores[m];
+}
+function showResult(){
+  sfxWin();
+  document.getElementById('final-score').textContent = total + ' / 100';
+  const stars = total >= 85 ? '⭐⭐⭐' : total >= 70 ? '⭐⭐' : '⭐';
+  document.getElementById('final-stars').textContent = stars;
+  document.getElementById('final-msg').textContent =
+    total >= 85 ? 'Detektif Ahli! Kamu berhasil menjaga harmoni ekosistem!' :
+    total >= 70 ? 'Detektif Baik! Terus asah kemampuanmu.' :
+    'Calon Detektif! Coba ulangi misi yang belum sempurna.';
+  const bl = document.getElementById('final-badges');
+  bl.innerHTML = '';
+  const list = [
+    {k:'m1', e:'🥉', n:'Peneliti'}, {k:'m2', e:'🥈', n:'Penyusun'},
+    {k:'m3', e:'🥇', n:'Analis'}, {k:'m4', e:'🏅', n:'Penjaga Harmoni'}
+  ];
+  list.forEach(b=>{
+    if(badges[b.k]) bl.innerHTML += `<div class="b"><span class="e">${b.e}</span>${b.n}</div>`;
+  });
+  const allBadges = badges.m1 && badges.m2 && badges.m3 && badges.m4;
+  document.getElementById('cert').style.display = allBadges ? 'block' : 'none';
+  if(allBadges) document.getElementById('cert-name').textContent = studentName;
+  scoreSent = false;
+  document.getElementById('send-status').className = 'send-status';
+  document.getElementById('send-status').textContent = '';
+  document.getElementById('btn-send').disabled = false;
+  document.getElementById('btn-send').textContent = '📤 Kirim Skor ke Guru';
+}
+
+/* ================= KIRIM SKOR KE GOOGLE SHEET (METODE IFRAME) ================= */
+function sendScore() {
+  if (scoreSent) { toast('Skor sudah terkirim!', 'info'); return; }
+  
+  const btn = document.getElementById('btn-send');
+  const status = document.getElementById('send-status');
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ Mengirim...';
+  status.className = 'send-status show loading';
+  status.textContent = 'Sedang mengirim skor...';
+
+  // Validasi URL
+  if (SCRIPT_URL.includes('GANTI_DENGAN_URL')) {
+    status.className = 'send-status show no';
+    status.textContent = '❌ URL Google Apps Script belum diatur.';
+    btn.disabled = false;
+    btn.textContent = '📤 Kirim Skor ke Guru';
+    return;
+  }
+
+  // 1. Siapkan parameter
+  const params = new URLSearchParams({
+    nama: studentName,
+    skor: total,
+    misi1: scores.m1,
+    misi2: scores.m2,
+    misi3: scores.m3,
+    misi4: scores.m4,
+    lencana: Object.values(badges).filter(Boolean).length,
+    waktu: new Date().toLocaleString('id-ID')
+  });
+
+  const finalURL = SCRIPT_URL + '?' + params.toString();
+
+  // 2. Buat iframe tersembunyi untuk mengirim data (Bypass CORS)
+  const iframe = document.createElement('iframe');
+  iframe.style.display = 'none';
+  iframe.name = 'hidden_sender';
+  document.body.appendChild(iframe);
+
+  // 3. Buat form yang menargetkan iframe
+  const form = document.createElement('form');
+  form.method = 'GET'; // Gunakan GET agar sesuai dengan doGet di Apps Script
+  form.action = finalURL;
+  form.target = 'hidden_sender';
+  document.body.appendChild(form);
+
+  // 4. Kirim form
+  form.submit();
+
+  // 5. Beri jeda sebelum menampilkan pesan sukses (karena kita tidak bisa tahu pasti kapan selesai)
+  setTimeout(() => {
+    scoreSent = true;
+    status.className = 'send-status show ok';
+    status.textContent = '✅ Skor sudah dikirim ke guru. (Jika data tidak muncul di Sheet, coba lagi).';
+    btn.textContent = '✅ Terkirim';
+    sfxCorrect();
+    
+    // Bersihkan elemen sementara
+    setTimeout(() => {
+      if (document.body.contains(form)) document.body.removeChild(form);
+      if (document.body.contains(iframe)) document.body.removeChild(iframe);
+    }, 1000);
+  }, 2000); // Jeda 2 detik
+}
+
+function restart(){
+  sfxClick();
+  stopMusic();
+  total = 0;
+  badges = {m1:false,m2:false,m3:false,m4:false};
+  scores = {m1:0,m2:0,m3:0,m4:0};
+  scoreSent = false;
+  document.getElementById('m1-badges').textContent='';
+  document.getElementById('m2-badges').textContent='';
+  document.getElementById('m3-badges').textContent='';
+  document.getElementById('m4-badges').textContent='';
+  document.getElementById('studentName').value = '';
+  go('scr-start');
+}
+
+// Izinkan tekan Enter di input nama
+document.getElementById('studentName').addEventListener('keypress', e=>{
+  if(e.key === 'Enter') startGame();
+});
+</script>
+</body>
+</html>
+
